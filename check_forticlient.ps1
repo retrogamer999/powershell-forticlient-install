@@ -11,7 +11,6 @@
 ################################################################################################
 ################################################################################################
 
-
 # Variables
 $sharePath = "\\EEH-AFS-1\IT\Software\FortiClient VPN 7.0.3"
 $localInstallPath = "C:\Temp\FortiClient7-0-13"
@@ -44,7 +43,7 @@ function Uninstall-FortiClient {
         [string]$uninstallString
     )
 
-    Write-Output "Uninstalling the existing version of FortiClient..."
+    Write-Host "Uninstalling FortiClient..."  # Added this line for visual feedback during uninstallation
     if ($uninstallString) {
         # Adjust the UninstallString if necessary
         $uninstallString = $uninstallString -replace "/I", "/X"
@@ -64,15 +63,22 @@ if ($fortiClient) {
     $installedVersion = $fortiClient.DisplayVersion
     Write-Output "FortiClient version installed: $installedVersion"
 
-    # Check if the version matches 7.0.13
-    if ($installedVersion -eq "7.0.13") {
-        Write-Output "FortiClient is already on version 7.0.13. No action required."
-    } else {
-        # Uninstall the existing version and install the correct version
+    # Check if the version does not contain 7.0.13
+    if ($installedVersion -notcontains "7.0.13") {
+        Write-Output "FortiClient version does not match 7.0.13. Proceeding with uninstallation and installation of 7.0.13."
+
+        # Uninstall the existing version and reboot
         Uninstall-FortiClient -uninstallString $fortiClient.UninstallString
-        Install-FortiClient
+        
+        # Trigger reboot to finalize uninstall before proceeding with installation
+        Write-Output "Rebooting the system to complete uninstall..."
+        Restart-Computer -Force -Wait
+    } else {
+        Write-Output "FortiClient is already on version 7.0.13. No action required."
     }
 } else {
-    # FortiClient is not installed; install the required version
-    Install-FortiClient
+    Write-Output "FortiClient is not installed. Proceeding with installation..."
 }
+
+# Install the correct version after reboot
+Install-FortiClient
